@@ -7,7 +7,7 @@ import ListGroup from "react-bootstrap/ListGroup";
 const ChatLists: React.FC = () => {
   const [response, setResponse] = useState<any>("");
   const alertClicked = () => {
-    alert("You clicked the third ListGroupItem");
+    console.log("You clicked the third ListGroupItem");
   };
   useEffect(() => {
     // declare the data fetching function
@@ -15,7 +15,6 @@ const ChatLists: React.FC = () => {
       try {
         const res = await axios.get("http://localhost:8000/v1/get_chats/0");
         setResponse(res.data);
-        console.log(res.data);
       } catch (err) {
         console.error(err);
       }
@@ -25,19 +24,25 @@ const ChatLists: React.FC = () => {
       // make sure to catch any error
       .catch(console.error);
   }, []);
-
+  console.log(response);
   return (
-    <ListGroup defaultActiveKey="#link1">
-      <ListGroup.Item action href="#link1">
-        Link 1
-      </ListGroup.Item>
-      <ListGroup.Item action href="#link2" disabled>
-        Link 2
-      </ListGroup.Item>
-      <ListGroup.Item action onClick={alertClicked}>
-        This one is a button
-      </ListGroup.Item>
-    </ListGroup>
+    <div>
+      <ListGroup defaultActiveKey="#link1">
+        {Array.isArray(response.chats) &&
+          response.chats.map((items: string, index: number) => {
+            return (
+              <ListGroup.Item
+                action
+                href={`#link${index}`}
+                key={index}
+                onClick={alertClicked}
+              >
+                {items}
+              </ListGroup.Item>
+            );
+          })}
+      </ListGroup>
+    </div>
   );
 };
 
