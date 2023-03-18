@@ -48,19 +48,25 @@ async def create_user(user_info: UserInfo):
 
 @app.delete("/v1/delete_chat/{user_id}_{chat_id}", tags=["chat"])
 async def delete_chat(user_id, chat_id):
-    if varify_chat(user_id, chat_id):
+    if verify_chat(user_id, chat_id):
         chat_message_db[user_id].pop(chat_id)
 
 @app.get("/v1/get_chats/{user_id}", tags=["chat"])
 async def get_chats(user_id):
     return {"chats": list(chat_message_db[user_id].keys())}
 
+@app.get("/v1/chat/{user_id}_{chat_id}", tags=["chat"])
+async def get_chat(user_id, chat_id):
+    if verify_user(user_id):
+        if verify_chat(user_id, chat_id):
+            return chat_message_db[user_id][chat_id]
+
 @app.post("/v1/chat/", tags=["chat"])
 async def chat(chat_message: ChatMessage):
     user_id = chat_message.user_id
     chat_id = chat_message.chat_id
-    if varify_user(user_id):
-        if not varify_chat(user_id, chat_id):
+    if verify_user(user_id):
+        if not verify_chat(user_id, chat_id):
             chat_message_db[user_id][chat_id] = [{"role": "system", "content": "You are a AI assistant."}]
 
         chat_message_db[user_id][chat_id].append(gen_message_dict(chat_message.message))
@@ -97,11 +103,11 @@ def do_streaming_requese(chat_message_db, user_id, chat_id):
 def gen_message_dict(message):
     return {"role": "user", "content": message}
 
-def varify_chat(user_id, chat_id):
+def verify_chat(user_id, chat_id):
     if chat_message_db[user_id].get(chat_id):
         return True
     return False
-def varify_user(user_id):
+def verify_user(user_id):
     if user_db.get(user_id):
         return True
     return False
