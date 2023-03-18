@@ -1,12 +1,12 @@
 import React from 'react';
 import logo from './logo.svg';
 import './App.css';
-import ChatGPT from './ChatGPT';
+import Main from './pages/Main';
 
 const App: React.FC = () => {
   return (
     <div className="App">
-      <ChatGPT />
+      <Main />
     </div>
   );
 };
