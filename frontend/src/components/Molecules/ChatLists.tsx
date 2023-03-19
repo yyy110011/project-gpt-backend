@@ -28,8 +28,8 @@ const ChatLists: React.FC = () => {
   return (
     <div>
       <ListGroup defaultActiveKey="#link1">
-        {Array.isArray(response.chats) &&
-          response.chats.map((items: string, index: number) => {
+        {Array.isArray(response) &&
+          response.map((items: string, index: number) => {
             return (
               <ListGroup.Item
                 action

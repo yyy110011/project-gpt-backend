@@ -53,7 +53,7 @@ async def delete_chat(user_id, chat_id):
 
 @app.get("/v1/get_chats/{user_id}", tags=["chat"])
 async def get_chats(user_id):
-    return {"chats": list(chat_message_db[user_id].keys())}
+    return list(chat_message_db[user_id].keys())
 
 @app.get("/v1/chat/{user_id}_{chat_id}", tags=["chat"])
 async def get_chat(user_id, chat_id):
