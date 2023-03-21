@@ -1,6 +1,7 @@
 from .users import Users
 from .chats import Chats
 from .messages import Messages
+from .system_msg import SystemMsg
 
 
 class Models:
@@ -9,6 +10,8 @@ class Models:
         self.users = None
         self.chats = None
         self.messages = None
+        self.system_msg = None
+
     def Users(self):
         if not self.users:
             self.users = Users(self.db)
@@ -23,3 +26,8 @@ class Models:
         if not self.messages:
             self.messages = Messages(self.db)
         return self.messages
+    
+    def SystemMsg(self):
+        if not self.system_msg:
+            self.system_msg = SystemMsg(self.db)
+        return self.system_msg
