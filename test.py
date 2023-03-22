@@ -11,7 +11,7 @@ sys_msg = input()
 
 post_msg = []
 [
-    {"role": "system", "content": sys_msg},
+    {"role": "system", "content": sys_msg}
 ]
 while True:
     curr_msg = input("What do you want to ask?\n")
