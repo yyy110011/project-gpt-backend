@@ -6,7 +6,7 @@ from app.models.models import Models
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-from .api_items import ChatMessage, UserInfo, user_db, chat_message_db
+from .api_items import *
 
 
 import openai
@@ -47,60 +47,92 @@ async def startup_event():
 async def read_root() -> dict:
     return {"message": "Welcome to your todo list."}
 
-@app.get("/v1/get_users/", tags=["user"])
+
+# Users
+
+@app.get("/v1/users/", tags=["user"])
 async def get_users():
     ret = await app.state.data_model.Users().get_users()
     return ret
 
-@app.delete("/v1/delete_user/{user_id}", tags=["user"])
-async def delete_user(user_id: str):
+@app.get("/v1/users/{user_id}", tags=["user"])
+async def get_user(user_id: int):
+    ret = await app.state.data_model.Users().get_user(user_id)
+    return ret
+
+@app.delete("/v1/users/{user_id}", tags=["user"])
+async def delete_user(user_id: int):
     ret = await app.state.data_model.Users().delete_user(user_id)
     return ret
 
-@app.post("/v1/create_user/", tags=["user"])
-async def create_user(user_info: UserInfo):
-    ret = await app.state.data_model.Users().create_user(user_info.user_name)
+@app.put("/v1/users/", tags=["user"])
+async def create_user(user: User):
+    ret = await app.state.data_model.Users().create_user(user)
     return ret
-    # if not user_db.get(user_info.user_id):
-    #     user_db[user_info.user_id] = str(user_info.user_name)
-    #     chat_message_db[user_info.user_id] = {}
-    #     return {"message": "Create fail.", "result": user_db}
-    # else:
-    #     return {"message": "Create fail."}
 
-@app.delete("/v1/delete_chat/{user_id}_{chat_id}", tags=["chat"])
-async def delete_chat(user_id, chat_id):
-    if verify_chat(user_id, chat_id):
-        chat_message_db[user_id].pop(chat_id)
 
-@app.get("/v1/get_chats/{user_id}", tags=["chat"])
-async def get_chats(user_id):
-    return list(chat_message_db[user_id].keys())
+# Chats
 
-@app.get("/v1/chat/{user_id}_{chat_id}", tags=["chat"])
-async def get_chat(user_id, chat_id):
-    if verify_user(user_id):
-        if verify_chat(user_id, chat_id):
-            return chat_message_db[user_id][chat_id]
+# Get chat list of particular user
+@app.get("/v1/chats/{user_id}", tags=["chat"])
+async def get_chats_list(user_id: int):
+    ret = await app.state.data_model.Chats().get_chats(user_id)
+    return ret
 
-@app.post("/v1/chat/", tags=["chat"])
-async def chat(chat_message: ChatMessage):
-    user_id = chat_message.user_id
-    chat_id = chat_message.chat_id
-    if verify_user(user_id):
-        if not verify_chat(user_id, chat_id):
-            chat_message_db[user_id][chat_id] = [{"role": "system", "content": "You are a AI assistant."}]
+# Get chat info
+@app.get("/v1/chats/{chat_id}", tags=["chat"])
+async def get_chat(chat_id: int):
+    ret = await app.state.data_model.Chats().get_chat(chat_id)
+    return ret
 
-        chat_message_db[user_id][chat_id].append(gen_message_dict(chat_message.message))
+# POST endpoint for adding a new chat
+@app.post("/v1/chats", tags=["chat"])
+async def create_chat(request: CreateChatRequest):
+    chat_model = app.state.data_model.Chats()
+    ret = await chat_model.new_chat(request.user_id, request.chat_name, request.system_msg_id)
+    return ret
 
-        return StreamingResponse(do_streaming_requese(chat_message_db, user_id, chat_id))
-    else:
-        return "User not exist."
+@app.put("/v1/chats/{chat_id}", tags=["chat"])
+async def rename_chat(chat_id: int, chat_name: str):
+    ret = await app.state.data_model.Chats().rename_chat(chat_id, chat_name)
+    return ret
 
-def do_streaming_requese(chat_message_db, user_id, chat_id):
+@app.delete("/v1/chats/{chat_id}", tags=["chat"])
+async def delete_chat(chat_id: int):
+    del_msg_ret = await app.state.data_model.Messages().delete_chat_message(chat_id)
+    del_chat_ret = await app.state.data_model.Chats().delete_chat(chat_id)
+    return del_chat_ret + del_msg_ret
+
+
+# Messages
+
+# POST endpoint for adding a new message to a chat
+@app.post("/v1/chats/{chat_id}/messages", tags=["message"])
+async def add_message(chat_id: int, request: MessageRequest):
+    messages_model = app.state.data_model.Messages()
+    chat_model = app.state.data_model.Chats()
+
+    # Get msg count
+    await chat_model.increase_chat_message_count(chat_id)
+    ret = await messages_model.add_message(chat_id, "user", request.message)
+    return ret
+
+# PUT endpoint for updating an existing message in a chat
+@app.put("/v1/chats/{chat_id}/messages/{message_id}", tags=["message"])
+async def update_message(chat_id: int, message_id: int, request: MessageRequest):
+    messages_model = app.state.data_model.Messages()
+    ret = await messages_model.update_message(message_id, request.message)
+    return ret
+
+@app.post("/v1/generate", tags=["chatgpt"])
+async def generate_result(message_sets: MessageSets):
+    message_sets = [{"role": m.role, "content": m.content} for m in message_sets.message]
+    return StreamingResponse(do_streaming_request(message_sets))
+
+async def do_streaming_request(messages):
     res = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages=chat_message_db[user_id][chat_id],
+        messages=messages,
         stream=True
     )
     res_msg = ""
@@ -109,29 +141,10 @@ def do_streaming_requese(chat_message_db, user_id, chat_id):
         msg = ""
         if chunk["choices"][0]["delta"].get("role"):
             res_role = chunk["choices"][0]["delta"]["role"]
-            chat_message_db[user_id][chat_id].append(
-                {
-                    "role": res_role,
-                    "content": res_msg
-                }
-            )
         if chunk["choices"][0]["delta"].get("content"):
             msg = chunk["choices"][0]["delta"]["content"]
-            chat_message_db[user_id][chat_id][-1]["content"] += msg
-            # res_msg += msg
+            res_msg += msg
         yield msg
-    
-
-def gen_message_dict(message):
-    return {"role": "user", "content": message}
-
-def verify_chat(user_id, chat_id):
-    if chat_message_db[user_id].get(chat_id):
-        return True
-    return False
-def verify_user(user_id):
-    if user_db.get(user_id):
-        return True
-    return False
+    # ret = await app.state.data_model.Messages().add_message(chat_id, "assistant", res_msg, counter)
     
 
