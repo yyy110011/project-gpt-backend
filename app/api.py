@@ -60,6 +60,11 @@ async def get_user(user_id: int):
     ret = await app.state.data_model.Users().get_user(user_id)
     return ret
 
+@app.get("/v1/users/name/{user_name}", tags=["user"])
+async def get_user(user_name: str):
+    ret = await app.state.data_model.Users().get_user_by_name(user_name)
+    return ret
+
 @app.delete("/v1/users/{user_id}", tags=["user"])
 async def delete_user(user_id: int):
     ret = await app.state.data_model.Users().delete_user(user_id)
@@ -105,6 +110,17 @@ async def delete_chat(chat_id: int):
 
 
 # Messages
+@app.get("/v1/chats/{chat_id}/messages", tags=["message"])
+async def get_messages(chat_id: int):
+    messages_model = app.state.data_model.Messages()
+    ret = await messages_model.get_messages(chat_id)
+    return ret
+
+@app.get("/v1/chats/{chat_id}/messages/{message_id}", tags=["message"])
+async def get_message(chat_id: int, message_id: int):
+    messages_model = app.state.data_model.Messages()
+    ret = await messages_model.get_message(message_id)
+    return ret
 
 # POST endpoint for adding a new message to a chat
 @app.post("/v1/chats/{chat_id}/messages", tags=["message"])

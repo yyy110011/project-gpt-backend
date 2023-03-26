@@ -22,3 +22,7 @@ class Users:
     def get_user(self, user_id):
         ret = self.db.fetch('SELECT * FROM users where users.id=$1', user_id)
         return ret
+    
+    def get_user_by_name(self, user_name):
+        ret = self.db.fetch('SELECT * FROM users where users.name=$1', user_name)
+        return ret

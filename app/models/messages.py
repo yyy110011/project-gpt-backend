@@ -9,8 +9,12 @@ class Messages:
             VALUES ($1, $2, $3) RETURNING *;''', chat_id, role, message)
         return ret
 
+    def get_message(self, message_id):
+        ret = self.db.fetch('SELECT * FROM messages WHERE messages.id=$1', message_id)
+        return ret
+
     def get_messages(self, chat_id):
-        ret = self.db.fetch('SELECT * FROM messages WHERE messages.chat_id=$1', int(chat_id))
+        ret = self.db.fetch('SELECT * FROM messages WHERE messages.chat_id=$1', chat_id)
         return ret
 
     def delete_chat_message(self, chat_id):
