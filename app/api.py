@@ -85,7 +85,7 @@ async def get_chats_list(user_id: int):
     return ret
 
 # Get chat info
-@app.get("/v1/chats/{chat_id}", tags=["chat"])
+@app.get("/v1/chats/chat/{chat_id}", tags=["chat"])
 async def get_chat(chat_id: int):
     ret = await app.state.data_model.Chats().get_chat(chat_id)
     return ret
