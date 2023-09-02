@@ -1,3 +1,4 @@
+import os
 import asyncio
 import asyncpg
 from app.database import Database
@@ -30,15 +31,14 @@ app.add_middleware(
 )
 
 
-from .env import *
 @app.on_event("startup")
 async def startup_event():
     app.state.db = Database(
-        user=DB_USER,
-        password=DB_PASSWORD,
-        database=DB_DATABASE,
-        host=DB_HOST,
-        port=DB_PORT
+        user=os.getenv('USER'),
+        password=os.getenv('PASSWORD'),
+        database=os.getenv('DATABASE'),
+        host=os.getenv('HOST'),
+        port=os.getenv('PORT')
     )
     app.state.data_model = Models(app.state.db)
     await app.state.db.connect()
