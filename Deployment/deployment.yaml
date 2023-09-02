@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpt-backend
+  namespace: gpt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gpt-backend
+  template:
+    metadata:
+      labels:
+        app: gpt-backend
+    spec:
+      containers:
+      - name: gpt-backend
+        image: gpt-backend:develop        
+        command: [ "python", "main.py" ]
+        env:
+        - name: HOST
+          value: db
+        - name: USER
+          value: db
+        - name: PASSWORD
+          value: db
+        - name: DATABASE
+          value: postgres
+        - name: PORT
+          value: "5432"
+        ports:
+        - containerPort: 8000
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: gpt-backend
+  namespace: gpt
+spec:
+  selector:
+    app: gpt-backend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gpt-backend-ingress
+  namespace: gpt
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "api.birdeo.cc"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: gpt-backend
+            port:
+              number: 80
+
