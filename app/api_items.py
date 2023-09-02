@@ -16,4 +16,4 @@ class MessageUnit(BaseModel):
     content: str
 
 class MessageSets(BaseModel):
-    message: list[MessageUnit]
+    message: list
