@@ -13,9 +13,11 @@ spec:
       labels:
         app: gpt-backend
     spec:
+      nodeSelector:
+        node-key: birdeonode2
       containers:
       - name: gpt-backend
-        image: gpt-backend:develop        
+        image: gpt-backend:develop
         command: [ "python", "main.py" ]
         env:
         - name: HOST
@@ -66,4 +68,7 @@ spec:
             name: gpt-backend
             port:
               number: 80
-
+  tls:
+  - hosts:
+    - api.birdeo.cc
+    secretName: birdeo-api-tls
