@@ -1,0 +1,4 @@
+docker run -d --rm -p 8988:3001 -p 8111:80     --env-file env-dev     --name gpt-backend-debug     gpt-backend:develop
+
+
+python -m debugpy --listen 0.0.0.0:3001 --wait-for-client main.py

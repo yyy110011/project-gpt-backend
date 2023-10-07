@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-map-gpt
+  namespace: gpt
+data:
+  POSTGRES_IP: db
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: db
+  POSTGRES_PWD: db
+  POSTGRES_DB: db_must_not_set_in_uat_or_prod
